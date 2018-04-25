@@ -1,6 +1,11 @@
 # -*- coding: UTF-8 -*-
 # See the LICENSE.rst file for licensing information.
 
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from past.utils import old_div
 from numpy import array, linspace, alen, append, arange, logical_not, log10, nan
 import re
 
@@ -241,15 +246,15 @@ def JCAMP_calc_xsec(jcamp_dict, wavemin=None, wavemax=None, skip_nonquant=True, 
     ## bin retains its proportionality to energy, which is what we want.
     if (jcamp_dict['xunits'].lower() in ('1/cm','cm-1','cm^-1')):
         jcamp_dict['wavenumbers'] = array(x)            ## note that array() always performs a copy
-        x = 10000.0 / x
+        x = old_div(10000.0, x)
         jcamp_dict['wavelengths'] = x
     elif (jcamp_dict['xunits'].lower() in ('micrometers','um','wavelength (um)')):
         jcamp_dict['wavelengths'] = x
-        jcamp_dict['wavenumbers'] = 10000.0 / x
+        jcamp_dict['wavenumbers'] = old_div(10000.0, x)
     elif (jcamp_dict['xunits'].lower() in ('nanometers','nm','wavelength (nm)')):
         x = x * 1000.0
         jcamp_dict['wavelengths'] = x
-        jcamp_dict['wavenumbers'] = 10000.0 / x
+        jcamp_dict['wavenumbers'] = old_div(10000.0, x)
     else:
         raise ValueError('Don\'t know how to convert the spectrum\'s x units ("' + jcamp_dict['xunits'] + '") to micrometers.')
 
@@ -263,7 +268,7 @@ def JCAMP_calc_xsec(jcamp_dict, wavemin=None, wavemax=None, skip_nonquant=True, 
 
         ## Convert to absorbance.
         okay = (y > 0.0)
-        y[okay] = log10(1.0 / y[okay])
+        y[okay] = log10(old_div(1.0, y[okay]))
         y[logical_not(okay)] = nan
 
         jcamp_dict['absorbance'] = y
@@ -271,7 +276,7 @@ def JCAMP_calc_xsec(jcamp_dict, wavemin=None, wavemax=None, skip_nonquant=True, 
         pass
     elif (jcamp_dict['yunits'].lower() == '(micromol/mol)-1m-1 (base 10)'):
         jcamp_dict['yunits'] = 'xsec (m^2))'
-        jcamp_dict['xsec'] = y / 2.687e19
+        jcamp_dict['xsec'] = old_div(y, 2.687e19)
         return
     else:
         raise ValueError('Don\'t know how to convert the spectrum\'s y units ("' + jcamp_dict['yunits'] + '") to absorbance.')
@@ -280,11 +285,11 @@ def JCAMP_calc_xsec(jcamp_dict, wavemin=None, wavemax=None, skip_nonquant=True, 
     if ('path length' in jcamp_dict):
         (val,unit) = jcamp_dict['path length'].lower().split()[0:2]
         if (unit == 'cm'):
-            ell = float(val) / 100.0
+            ell = old_div(float(val), 100.0)
         elif (unit == 'm'):
             ell = float(val)
         elif (unit == 'mm'):
-            ell = float(val) / 1000.0
+            ell = old_div(float(val), 1000.0)
         else:
             ell = 0.1
     else:
@@ -341,7 +346,7 @@ def is_float(s):
     '''
 
     if isinstance(s,tuple) or isinstance(s,list):
-        if not all(isinstance(i, (str, unicode)) for i in s):
+        if not all(isinstance(i, (basestring)) for i in s):
             raise TypeError("Input {} is not a list of strings".format(s))
         if (len(s) == 0):
             raise ValueError('Input {} is empty'.format(s))
@@ -354,7 +359,7 @@ def is_float(s):
                     bool[i] = False
         return(bool)
     else:
-        if not isinstance(s, (str, unicode)): raise TypeError("Input '%s' is not a string" % (s))
+        if not isinstance(s, (basestring)): raise TypeError("Input '%s' is not a string" % (s))
         try:
             float(s)
             return(True)
